@@ -13,7 +13,7 @@ CREATE TABLE genres
 CREATE TABLE persons
 (
     id         SERIAL PRIMARY KEY,
-    first_name VARCHAR(255) NOT NULL,
+    first_name VARCHAR(255),
     last_name  VARCHAR(255) NOT NULL,
 
     UNIQUE (first_name, last_name)

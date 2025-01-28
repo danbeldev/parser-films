@@ -26,8 +26,12 @@ public class PersonEntity {
 
     public PersonEntity(String fio) {
         String[] nameParts = fio.split(" ");
-        firstName = nameParts[0];
-        lastName = nameParts[1];
+        if (nameParts.length > 2) {
+            firstName = nameParts[0];
+            lastName = nameParts[1];
+        }else {
+            lastName = nameParts[0];
+        }
     }
 
     @Override
