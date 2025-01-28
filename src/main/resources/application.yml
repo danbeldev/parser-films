@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: parser-films
+  config:
+    import: optional:file:.env[.properties]
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST}:5432/${POSTGRES_DATABASE}?currentSchema=${POSTGRES_SCHEMA}
+    username: ${POSTGRES_USERNAME}
+    password: ${POSTGRES_PASSWORD}
+  shell:
+    interactive:
+      enabled: true
+
+webdriver:
+  chrome:
+    driver: /usr/local/bin/chromedriver
+
+parser:
+  kinopoisk:
+    films:
+      url: https://www.kinopoisk.ru/lists/movies/popular-films
+    film-details:
+      base-url: https://www.kinopoisk.ru/film/
