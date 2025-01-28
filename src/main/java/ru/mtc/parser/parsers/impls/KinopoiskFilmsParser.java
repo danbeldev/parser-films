@@ -30,12 +30,13 @@ public class KinopoiskFilmsParser implements FilmsParser {
     private static final String FILM_NAME_ELEMENT_CLASSNAME = "base-movie-main-info_mainInfo__ZL_u3";
     private static final String FILM_ONLINE_BUTTON_ELEMENT_CLASSNAME = "styles_onlineButton__ER9Vt";
     private static final String FILM_LIST_INFO_ELEMENT_CLASSNAME = "desktop-list-main-info_additionalInfo__Hqzof";
-    private static final String FILM_RATING_ELEMENT_CLASSNAME = "styles_kinopoiskValueNeutral__4c8gP styles_kinopoiskValue__nkZEC";
+    private static final String FILM_RATING_ELEMENT_CLASSNAME = "styles_kinopoiskValueNeutral__4c8gP";
+    private static final String FILM_RATING_TOP_250_ELEMENT_CLASSNAME = "styles_kinopoiskValuePositive__7AAZG";
     private static final String FILM_RATING_COUNT_ELEMENT_CLASSNAME = "styles_kinopoiskCount__PT7ZX";
     private static final String FILM_YEAR_DURATION_INFO_ELEMENT_CLASSNAME = "desktop-list-main-info_secondaryText__M_aus";
 
     private final Pattern filmListInfoPattern = Pattern.compile("^(.*?) • (.*?)\\s+Режиссёр: (.+)$");
-    private final Pattern filmYeadDuractionInfoPattern = Pattern.compile("(\\d{4}), (\\d+) ч (\\d+) мин");
+    private final Pattern filmYeadDuractionInfoPattern = Pattern.compile("(\\d{4}), (?:(\\d+) ч )?(?:(\\d+) мин)?");
 
     @Value("${parser.kinopoisk.films.url}")
     private String filmsUrl;
@@ -139,6 +140,8 @@ public class KinopoiskFilmsParser implements FilmsParser {
     private Float getRating(Element element) {
         try {
             String ratingStr = element.getElementsByClass(FILM_RATING_ELEMENT_CLASSNAME).text();
+            if (ratingStr.isEmpty())
+                ratingStr = element.getElementsByClass(FILM_RATING_TOP_250_ELEMENT_CLASSNAME).text();
             if (ratingStr.isEmpty()) return 0.0f;
             return Float.parseFloat(ratingStr);
         } catch (NullPointerException ignore) {
@@ -160,13 +163,18 @@ public class KinopoiskFilmsParser implements FilmsParser {
         String input = element.getElementsByClass(FILM_YEAR_DURATION_INFO_ELEMENT_CLASSNAME).text();
         if (input.isEmpty()) return null;
 
+        if (input.charAt(0) == ',') {
+            input = input.substring(2);
+        }
+
         Matcher matcher = filmYeadDuractionInfoPattern.matcher(input);
 
         if (matcher.find()) {
             int year = Integer.parseInt(matcher.group(1));
 
-            int hours = Integer.parseInt(matcher.group(2));
-            int minutes = Integer.parseInt(matcher.group(3));
+            int hours = matcher.group(2) != null ? Integer.parseInt(matcher.group(2)) : 0;
+            int minutes = matcher.group(3) != null ? Integer.parseInt(matcher.group(3)) : 0;
+
             int totalMinutes = hours * 60 + minutes;
 
             return new int[]{year, totalMinutes};
