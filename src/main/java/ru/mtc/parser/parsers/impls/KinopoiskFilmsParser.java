@@ -34,9 +34,13 @@ public class KinopoiskFilmsParser implements FilmsParser {
     private static final String FILM_RATING_TOP_250_ELEMENT_CLASSNAME = "styles_kinopoiskValuePositive__7AAZG";
     private static final String FILM_RATING_COUNT_ELEMENT_CLASSNAME = "styles_kinopoiskCount__PT7ZX";
     private static final String FILM_YEAR_DURATION_INFO_ELEMENT_CLASSNAME = "desktop-list-main-info_secondaryText__M_aus";
+    private static final String FILM_RELEASE_DATE_ELEMENT_CLASSNAME = "desktop-list-main-info_releaseDate__3RUfU";
 
     private final Pattern filmListInfoPattern = Pattern.compile("^(.*?) • (.*?)\\s+Режиссёр: (.+)$");
     private final Pattern filmYeadDuractionInfoPattern = Pattern.compile("(\\d{4}), (?:(\\d+) ч )?(?:(\\d+) мин)?");
+    private final Pattern filReleaseDafePattern = Pattern.compile("\\b(\\d{4})\\b");
+    private final Pattern horsPattern = Pattern.compile("(\\d+)\\s*ч");
+    private final Pattern minutePattern = Pattern.compile("(\\d+)\\s*мин");
 
     @Value("${parser.kinopoisk.films.url}")
     private String filmsUrl;
@@ -104,8 +108,16 @@ public class KinopoiskFilmsParser implements FilmsParser {
             film.setRatingsCount(getRatingsCount(cardFilm));
 
             int[] yearAndDuration = getYearAndDuration(cardFilm);
-            if (yearAndDuration != null) {
+
+            if (yearAndDuration[0] == 0) {
+                film.setYear(getYearRelease(cardFilm));
+            } else {
                 film.setYear(yearAndDuration[0]);
+            }
+
+            if (yearAndDuration[1] == 0) {
+                film.setDuration(getDuration(cardFilm));
+            } else {
                 film.setDuration(yearAndDuration[1]);
             }
 
@@ -161,7 +173,7 @@ public class KinopoiskFilmsParser implements FilmsParser {
 
     private int[] getYearAndDuration(Element element) {
         String input = element.getElementsByClass(FILM_YEAR_DURATION_INFO_ELEMENT_CLASSNAME).text();
-        if (input.isEmpty()) return null;
+        if (input.isEmpty()) return new int[]{0, 0};
 
         if (input.charAt(0) == ',') {
             input = input.substring(2);
@@ -180,7 +192,46 @@ public class KinopoiskFilmsParser implements FilmsParser {
             return new int[]{year, totalMinutes};
         }
 
+        return new int[]{0, 0};
+    }
+
+    private Integer getYearRelease(Element element) {
+        String input = element.getElementsByClass(FILM_RELEASE_DATE_ELEMENT_CLASSNAME).text();
+        if (input.isEmpty()) return null;
+
+        Matcher matcher = filReleaseDafePattern.matcher(input);
+
+        if (matcher.find()) {
+            return Integer.parseInt(matcher.group(1));
+        }
+
         return null;
+    }
+
+    private Integer getDuration(Element element) {
+        String input = element.getElementsByClass(FILM_YEAR_DURATION_INFO_ELEMENT_CLASSNAME).text();
+
+        if (input.isEmpty()) return null;
+
+        if (input.charAt(0) == ',') {
+            input = input.substring(2);
+        }
+
+        int totalMinutes = 0;
+
+        Matcher hourMatcher = horsPattern.matcher(input);
+        if (hourMatcher.find()) {
+            int hours = Integer.parseInt(hourMatcher.group(1));
+            totalMinutes += hours * 60;
+        }
+
+        Matcher minuteMatcher = minutePattern.matcher(input);
+        if (minuteMatcher.find()) {
+            int minutes = Integer.parseInt(minuteMatcher.group(1));
+            totalMinutes += minutes;
+        }
+
+        return totalMinutes;
     }
 
     private String[] getCountryAndGenreAndDirector(Element element) {

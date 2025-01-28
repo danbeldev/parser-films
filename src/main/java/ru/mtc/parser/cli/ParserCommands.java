@@ -15,22 +15,12 @@ public class ParserCommands {
 
     @ShellMethod(key = "films")
     public Integer getFilms(int page) {
-        try {
-            return filmService.save(filmsParser.getFilms(page)).size();
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return 0;
-        }
+        return filmService.save(filmsParser.getFilms(page)).size();
     }
 
     @ShellMethod(key = "films-all-page")
     public Integer getFilms() {
-        try {
-            var films = filmsParser.getFilms();
-            return filmService.save(films).size();
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return 0;
-        }
+        var films = filmsParser.getFilms();
+        return filmService.save(films).size();
     }
 }
