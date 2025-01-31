@@ -48,13 +48,6 @@ public class KinopoiskFilmsParser implements FilmsParser {
     private final JsoupService jsoupService;
 
     @Override
-    public List<FilmEntity> getFilms(int page) {
-        Document filmsDocument = jsoupService.getDocumentByUrl(getFilmsPageUrl(page), true);
-        if (filmsDocument == null) return List.of();
-        return getFilms(filmsDocument);
-    }
-
-    @Override
     public List<FilmEntity> getFilms() {
         Document firstFilmsDocument = jsoupService.getDocumentByUrl(filmsUrl);
 
@@ -72,6 +65,13 @@ public class KinopoiskFilmsParser implements FilmsParser {
                 .map(this::getFilms)
                 .flatMap(List::stream)
                 .toList();
+    }
+
+    @Override
+    public List<FilmEntity> getFilms(int page) {
+        Document filmsDocument = jsoupService.getDocumentByUrl(getFilmsPageUrl(page));
+        if (filmsDocument == null) return List.of();
+        return getFilms(filmsDocument);
     }
 
     private int getMaxPage(Document document) {
@@ -109,16 +109,16 @@ public class KinopoiskFilmsParser implements FilmsParser {
 
             int[] yearAndDuration = getYearAndDuration(cardFilm);
 
-            if (yearAndDuration[0] == 0) {
-                film.setYear(getYearRelease(cardFilm));
-            } else {
+            if (yearAndDuration[0] != 0) {
                 film.setYear(yearAndDuration[0]);
+            } else {
+                film.setYear(getYearRelease(cardFilm));
             }
 
-            if (yearAndDuration[1] == 0) {
-                film.setDuration(getDuration(cardFilm));
-            } else {
+            if (yearAndDuration[1] != 0) {
                 film.setDuration(yearAndDuration[1]);
+            } else {
+                film.setDuration(getDuration(cardFilm));
             }
 
             String[] countryAndGenreAndDirector = getCountryAndGenreAndDirector(cardFilm);

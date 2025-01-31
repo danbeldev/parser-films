@@ -21,7 +21,7 @@ public class KinopoiskFilmDetailsParser implements FilmDetailsParser {
 
     @Override
     public FilmEntity getFilm(long id) {
-        Document document = jsoupService.getDocumentByUrl(getFilmUrl(id), true);
+        Document document = jsoupService.getDocumentByUrl(getFilmUrl(id));
         if (document == null) return null;
 
         var film = new FilmEntity();

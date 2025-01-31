@@ -15,12 +15,15 @@ public class ParserCommands {
 
     @ShellMethod(key = "films")
     public Integer getFilms(int page) {
-        return filmService.save(filmsParser.getFilms(page)).size();
+        var films = filmsParser.getFilms(page);
+        System.out.println(films);
+        return filmService.save(films).size();
     }
 
     @ShellMethod(key = "films-all-page")
     public Integer getFilms() {
         var films = filmsParser.getFilms();
+        System.out.println(films);
         return filmService.save(films).size();
     }
 }

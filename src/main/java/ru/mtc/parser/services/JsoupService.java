@@ -9,9 +9,7 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.springframework.stereotype.Service;
 
-import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -19,30 +17,19 @@ public class JsoupService {
 
     private final WebDriver driver;
 
-    public Document getDocumentByUrl(String url) {
-        return getDocumentByUrl(url, false);
-    }
-
     @SneakyThrows
-    public Document getDocumentByUrl(String url, boolean manuallyCaptcha) {
+    public Document getDocumentByUrl(String url) {
         try {
             driver.get(url);
 
             if (isCaptchaPage()) {
                 System.out.println("CAPTCHA обнаружена");
-                if (!handleCaptcha(() -> driver.get(url), manuallyCaptcha)) {
-                    return null;
-                }
+                handleCaptcha(() -> driver.get(url));
             }
 
-            Map<String, String> cookies = driver.manage().getCookies()
-                    .stream()
-                    .collect(Collectors.toMap(org.openqa.selenium.Cookie::getName, org.openqa.selenium.Cookie::getValue));
+            String pageHtml = driver.getPageSource();
 
-            return Jsoup.connect(url)
-                    .cookies(cookies)
-                    .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:114.0) Gecko/20100101 Firefox/114.0")
-                    .get();
+            return pageHtml != null ? Jsoup.parse(pageHtml) : null;
         } catch (Exception e) {
             System.err.println("Ошибка при загрузке страницы: " + e.getMessage());
             throw e;
@@ -50,7 +37,7 @@ public class JsoupService {
     }
 
     @SneakyThrows
-    private boolean handleCaptcha(Runnable refresh, boolean manuallyCaptcha) {
+    private void handleCaptcha(Runnable refresh) {
         int maxAttempts = 1;
         int attempts = 0;
         int waitTimeMillis = 5_000;
@@ -63,26 +50,21 @@ public class JsoupService {
 
             if (!isCaptchaPage()) {
                 System.out.println("CAPTCHA решена!");
-                return true;
+                return;
             }
 
             refresh.run();
 
             if (!isCaptchaPage()) {
                 System.out.println("CAPTCHA решена!");
-                return true;
+                return;
             }
 
             attempts++;
         }
 
-        if (manuallyCaptcha) {
-            System.out.println("Решите CAPTCHA и нажмите Enter...");
-            new java.util.Scanner(System.in).nextLine(); // Ожидаем, пока пользователь решит CAPTCHA вручную
-            return true;
-        }
-
-        return false;
+        System.out.println("Решите CAPTCHA и нажмите Enter...");
+        new java.util.Scanner(System.in).nextLine();
     }
 
     private void solveCaptcha() {
